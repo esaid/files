@@ -24,29 +24,40 @@
 
 // Dust measurement example:
 // You need to include lib_dust.h
+#define DEBUG 1
+
 #include <lib_dust.h>
 
 float dust=0;
-float avgDust, medDust, stdevDust;
-
+float avgDust, medDust, stdevDust , ugDust;
+float timeStart , timeEnd ;
 void setup(){
   Serial.begin(9600);
   initDust();			// Don't forget to call initDust() to set A0 pin as input pin
 }
 
+
 void loop(){
-  float myAvgDust, myMedDust, myStdevDust; // my own calirated values
-  dust = measureDust(avgDust, medDust, stdevDust);		// Then, you just have to call measureDust() whenever you want, and get the dust level
+  //float myAvgDust, myMedDust, myStdevDust; // my own calirated values
+  timeStart = millis();
+  dust = measureDust(avgDust, medDust, stdevDust , ugDust);		// Then, you just have to call measureDust() whenever you want, and get the dust level
+  timeEnd = millis() - timeStart ;
+  
   Serial.print("Dust value averaged by the dust library: ");
   Serial.println(dust);
-
+  Serial.print("Time (ms): ") ;
+  Serial.print(timeEnd) ;
+  Serial.println();
+  
   // finer custom made calibration for the sensor
-  myAvgDust = ((avgDust*0.0049)-0.0256)*120000-38000;
-  myMedDust = ((medDust*0.0049)-0.0256)*120000-38000;
-  myStdevDust = stdevDust*588;
-  Serial.println("My own calibrated values: ");
-  Serial.println(myAvgDust);
-  Serial.println(myMedDust);
-  Serial.println(myStdevDust);
-  delay(2000);
+  //myAvgDust = ((avgDust*0.0049)-0.0256)*120000-38000;
+  //myMedDust = ((medDust*0.0049)-0.0256)*120000-38000;
+  //myStdevDust = stdevDust*588;
+  Serial.println("My values: ");
+  Serial.println(avgDust);
+  Serial.println(medDust);
+  Serial.println(stdevDust);
+  Serial.println(ugDust);
+  delay(5000);
 }
+
