@@ -23,13 +23,13 @@
 
 
 #include <lib_dust.h>
-#define DEBUG 1
+//#define DEBUG 1
+// prescaler 
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
 #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
 
 // GLOBALS
-//unsigned int dustPin=6;
-//unsigned int ledPower=2;
+
 unsigned int delayTime=280;
 unsigned int delayTime2=40;
 
@@ -38,16 +38,15 @@ unsigned int skip_measurements=50; // skip the first 50 mesurements of a series
 
 unsigned int dustVal=0;
 float voltage = 0;
-float dustdensity = 0;
-float ppmpercf = 0;
+
+
+
 float calcVoltage = 0 ;
 float range = 3.3;
-float dustug =0.0 ;
-unsigned int dustValues[NB_MEAS]; // array storing all the measured values (10 bit)
-// since we'll be doing an average over several values, we can increase the precision of each measurement to more bits
-// with a simple bit shift without fearing an overflow
-unsigned long sum; // to store the sum of measured dust values (4 bytes): NB_MEAS < 4194303 to avoid overflow => OK
-unsigned int timemeasure[NB_MEAS]; 
+
+unsigned int dustValues[NB_MEAS];
+unsigned long sum;
+//unsigned int timemeasure[NB_MEAS]; 
 unsigned long timestart ;
 unsigned long timestop ;
 
@@ -60,18 +59,23 @@ float fmap(float x, float in_min, float in_max, float out_min, float out_max)
 // INITIALIZE DUST PIN
 void initDust(void){
   pinMode(ledPower,OUTPUT);
-  // set prescale to 16
+   // set prescale to 16, 32, 64 or 128
+  // init to 16
   sbi(ADCSRA,ADPS2) ;
   cbi(ADCSRA,ADPS1) ;
   cbi(ADCSRA,ADPS0) ;
 }
 
 // MEASURE DUST
-  float measureDust(float &avgRetDust, float &medRetDust, float &stdevRetDust , float &ugRetDust){
+  void measureDust(float &avgRetDust, float &medRetDust, float &stdevRetDust , float &ugRetDust){
   unsigned int i,j; // loop indexes
   unsigned int temp; // temporary dust value
-  float medianDust, varDust, stdevDust, avgDust; // some statistical values
-
+  // some statistical values
+  float avgDust = 0.0;
+  float medianDust = 0.0 ;
+  float stdevDust =0.0 ;
+  float dustug =0.0 ;
+  float varDust = 0.0 ;
   // skip initial measurements see dust_calib
   for (i=0; i<skip_measurements; i++) {
     digitalWrite(ledPower,LOW);     // power on the LED
@@ -86,10 +90,10 @@ void initDust(void){
     digitalWrite(ledPower,LOW);     // power on the LED
     delayMicroseconds(delayTime);
     timestart = micros();
-    //dustValues[i]=analogRead(dustPin) << 6 ;    // read the dust value and shift the 10bit ADC value by 6 bits
+    
     dustValues[i]=analogRead(dustPin);
     timestop = micros();
-    timemeasure[i] = (timestop - timestart) ;
+    //timemeasure[i] = (timestop - timestart) ;
     delayMicroseconds(delayTime2);
     digitalWrite(ledPower,HIGH);    // turn the LED off
     delayMicroseconds(offTime);
@@ -106,8 +110,8 @@ void initDust(void){
     Serial.print(" ") ;
     calcVoltage = fmap(dustValues[i], 0, 1023, 0.0, range ) * coefficient;
     Serial.print(calcVoltage);
-    Serial.print(" ") ;
-    Serial.print(timemeasure[i]);
+    //Serial.print(" ") ;
+    //Serial.print(timemeasure[i]);
     Serial.println();
 	
   }
@@ -131,11 +135,13 @@ void initDust(void){
     sum += dustValues[i];
   }
   avgDust = sum/NB_MEAS;
-    // compute variance
-    for (i=0; i<NB_MEAS; i++) {
-		varDust += (dustValues[i]-avgDust)*(dustValues[i]-avgDust);
-		//Serial.println(varDust);
-	}
+    
+	
+	// compute variance
+  for (i=0; i<NB_MEAS; i++) {  
+	varDust += (dustValues[i]-avgDust)*(dustValues[i]-avgDust);
+	//Serial.println(varDust);
+  }
   varDust = varDust/NB_MEAS;
   stdevDust = sqrt(varDust);
   // now dustValues is sorted
@@ -165,26 +171,13 @@ void initDust(void){
   Serial.print("dust ug: ");
   Serial.println(dustug,3);
 #endif
-  // copy those in the results with no scaling
+  // copy those in the results
   avgRetDust = avgDust;
   medRetDust = medianDust;
   stdevRetDust = stdevDust;
   ugRetDust = dustug ;
 
-  // default scaling for compatibility reasons... 
-/*
-  voltage = avgDust*0.0049;
-  dustdensity = 0.17*voltage-0.1;
-  ppmpercf = (voltage-0.0256)*120000;
-  if (ppmpercf < 0)
-    ppmpercf = 0;
-  if (dustdensity < 0 )
-    dustdensity = 0;
-  if (dustdensity > 0.5)
-    dustdensity = 0.5;
 
-  return ppmpercf;
-*/
 
 }
 

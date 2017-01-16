@@ -24,16 +24,16 @@
 
 #include <Arduino.h>
 
-#define NB_MEAS 20 // Number of measurements to do . 
+#define NB_MEAS 50  // Number of measurements to do . 
 // si PAUSE = 165 alors coeeficient =1
-#define PAUSE 165 // tau = 5 *R*C = 165 ms temps de recharge du condensateur
-#define coefficient 1
-// si PAUSE = 0 , alors coefficient = 1.7 
-//#define PAUSE 0 
-//#define coefficient 1.7
+//#define PAUSE 165 // tau = 5 *R*C = 165 ms temps de recharge du condensateur
+//#define coefficient 1
+// si PAUSE = 0 , alors coefficient = 1.5
+#define PAUSE 0 
+#define coefficient 1.5
 
 
 #define dustPin 6
 #define ledPower 2
 void initDust(void);		// Call this function to initialize the pin (A0) used to measure dust 
-float measureDust(float &avgRetDust, float &medRetDust, float &stdevRetDust , float &ugRetDust); // Call this function will measure dust and return the value(s)
+void measureDust(float &avgRetDust, float &medRetDust, float &stdevRetDust , float &ugRetDust); // Call this function will measure dust and return the value(s)
